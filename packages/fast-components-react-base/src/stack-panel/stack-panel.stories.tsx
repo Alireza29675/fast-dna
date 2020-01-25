@@ -126,7 +126,6 @@ const uniformImages: JSX.Element[] = [
                         height: "100px",
                     }}
                 />
-                ;
             </Button>
         );
     }
@@ -331,7 +330,6 @@ storiesOf("Stack Panel", module)
         <TestStackPanel
             stackPanelProps={{
                 itemSpanOverrides: itemSpans,
-                virtualize: true,
                 preloadBufferLength: 6,
                 neverVirtualizeIndexes: [0, 9999],
             }}
