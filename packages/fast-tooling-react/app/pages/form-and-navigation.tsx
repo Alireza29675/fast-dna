@@ -8,7 +8,7 @@ import {
     FormChildOptionItem,
 } from "../../src/form/types";
 import * as testConfigs from "./form/";
-import { MessageSystem } from "../../src/message-system";
+import { MessageSystem, MessageSystemType } from "../../src/message-system";
 
 export type componentDataOnChange = (e: React.ChangeEvent<HTMLFormElement>) => void;
 
@@ -65,6 +65,7 @@ class FormAndNavigationTestPage extends React.Component<{}, FormTestPageState> {
                     [testConfigs.textField.schema.id]: testConfigs.textField.schema,
                 },
             });
+            fastMessageSystem.add({ onMessage: this.handleMessageSystem });
         }
 
         this.state = {
@@ -153,15 +154,7 @@ class FormAndNavigationTestPage extends React.Component<{}, FormTestPageState> {
 
     private renderNavigation(): React.ReactNode {
         return (
-            <Navigation
-                data={this.state.data}
-                schema={this.state.schema}
-                childOptions={this.getChildOptions()}
-                onLocationUpdate={this.handleLocationOnChange}
-                dataLocation={this.state.dataLocation}
-                onChange={this.handleDataOnChange}
-                dragAndDropReordering={true}
-            />
+            <Navigation messageSystem={fastMessageSystem} dragAndDropReordering={true} />
         );
     }
 
@@ -236,30 +229,53 @@ class FormAndNavigationTestPage extends React.Component<{}, FormTestPageState> {
         }
     };
 
+    private handleMessageSystem = (e: MessageEvent): void => {
+        switch (e.data.type) {
+            case MessageSystemType.initialize:
+                if (e.data.data && e.data.navigation) {
+                    this.setState({
+                        data: e.data.data,
+                        navigation: e.data.navigation,
+                    });
+                }
+            case MessageSystemType.data:
+                if (e.data.data) {
+                    this.setState({
+                        data: e.data.data,
+                    });
+                }
+            case MessageSystemType.navigation:
+                if (e.data.navigation) {
+                    this.setState({
+                        data: e.data.navigation,
+                    });
+                }
+        }
+    };
+
     private handleComponentUpdate = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-        const data: any =
-            testConfigs[e.target.value].data ||
-            getDataFromSchema(testConfigs[e.target.value].schema);
-        this.setState({
-            schema: testConfigs[e.target.value].schema,
-            data,
-        });
-    };
+        const data: any = !!testConfigs[e.target.value].data
+            ? testConfigs[e.target.value].data
+            : getDataFromSchema(testConfigs[e.target.value].schema);
 
-    /**
-     * Handles the change in location
-     */
-    private handleLocationOnChange = (dataLocation: string): void => {
-        this.setState({
-            dataLocation,
-        });
-    };
-
-    private handleDataOnChange = (data: any, dataLocation: string): void => {
-        this.setState({
-            data,
-            dataLocation,
-        });
+        if ((window as any).Worker && fastMessageSystem) {
+            fastMessageSystem.postMessage({
+                type: MessageSystemType.initialize,
+                data: [
+                    {
+                        foo: {
+                            schemaId: testConfigs[e.target.value].schema.id,
+                            data,
+                        },
+                    },
+                    "foo",
+                ],
+                schemas: {
+                    [testConfigs[e.target.value].schema.id]:
+                        testConfigs[e.target.value].schema,
+                },
+            });
+        }
     };
 
     private getComponentOptions(): JSX.Element[] {

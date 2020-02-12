@@ -43,8 +43,11 @@ export interface InitializeMessageIncoming {
 export interface InitializeMessageOutgoing {
     type: MessageSystemType.initialize;
     data: unknown;
+    dataDictionary: DataDictionary<unknown>;
     navigation: TreeNavigationConfig;
-    activeId: string;
+    navigationDictionary: TreeNavigationConfigDictionary;
+    activeDictionaryId: string;
+    activeNavigationConfigId: string;
     schema: any;
 }
 
@@ -63,7 +66,7 @@ export interface GetDataDictionaryMessageOutgoing {
     type: MessageSystemType.dataDictionary;
     action: MessageSystemDataDictionaryTypeAction.get;
     dataDictionary: DataDictionary<unknown>;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -81,7 +84,7 @@ export interface GetNavigationDictionaryMessageOutgoing {
     type: MessageSystemType.navigationDictionary;
     action: MessageSystemNavigationDictionaryTypeAction.get;
     navigationDictionary: TreeNavigationConfigDictionary;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -90,7 +93,7 @@ export interface GetNavigationDictionaryMessageOutgoing {
 export interface UpdateActiveIdDataDictionaryMessageIncoming {
     type: MessageSystemType.dataDictionary;
     action: MessageSystemDataDictionaryTypeAction.updateActiveId;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -99,7 +102,7 @@ export interface UpdateActiveIdDataDictionaryMessageIncoming {
 export interface UpdateActiveIdDataDictionaryMessageOutgoing {
     type: MessageSystemType.dataDictionary;
     action: MessageSystemDataDictionaryTypeAction.updateActiveId;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -108,7 +111,7 @@ export interface UpdateActiveIdDataDictionaryMessageOutgoing {
 export interface UpdateActiveIdNavigationDictionaryMessageIncoming {
     type: MessageSystemType.navigationDictionary;
     action: MessageSystemNavigationDictionaryTypeAction.updateActiveId;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -117,7 +120,7 @@ export interface UpdateActiveIdNavigationDictionaryMessageIncoming {
 export interface UpdateActiveIdNavigationDictionaryMessageOutgoing {
     type: MessageSystemType.navigationDictionary;
     action: MessageSystemNavigationDictionaryTypeAction.updateActiveId;
-    activeId: string;
+    activeDictionaryId: string;
 }
 
 /**
@@ -271,7 +274,8 @@ export type DataMessageOutgoing =
 export interface UpdateNavigationMessageIncoming {
     type: MessageSystemType.navigation;
     action: MessageSystemNavigationTypeAction.update;
-    activeId: string;
+    activeDictionaryId: string;
+    activeNavigationConfigId: string;
 }
 
 /**
@@ -280,7 +284,8 @@ export interface UpdateNavigationMessageIncoming {
 export interface UpdateNavigationMessageOutgoing {
     type: MessageSystemType.navigation;
     action: MessageSystemNavigationTypeAction.update;
-    activeId: string;
+    activeDictionaryId: string;
+    activeNavigationConfigId: string;
 }
 
 /**
@@ -297,7 +302,8 @@ export interface GetNavigationMessageIncoming {
 export interface GetNavigationMessageOutgoing {
     type: MessageSystemType.navigation;
     action: MessageSystemNavigationTypeAction.get;
-    activeId: string;
+    activeDictionaryId: string;
+    activeNavigationConfigId: string;
     navigation: TreeNavigationConfig;
 }
 

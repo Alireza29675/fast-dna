@@ -21,6 +21,7 @@ describe("getBreadcrumbs", () => {
                 },
             },
             "",
+            "",
             jest.fn()
         );
 
@@ -65,6 +66,7 @@ describe("getBreadcrumbs", () => {
                     items: [],
                 },
             },
+            "",
             "bar",
             jest.fn()
         );

@@ -52,9 +52,14 @@ export interface FormProps {
  */
 export interface FormState {
     /**
-     * Current active navigation ID
+     * Current active dictionary ID
      */
-    activeNavigationId: string;
+    activeDictionaryId: string;
+
+    /**
+     * Current active navigation config ID
+     */
+    activeNavigationConfigId: string;
 
     /**
      * The schema

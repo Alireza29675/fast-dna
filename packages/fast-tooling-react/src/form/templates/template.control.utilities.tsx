@@ -159,7 +159,8 @@ abstract class ControlTemplateUtilities<P, S> extends React.Component<
         return {
             type: this.props.type,
             dataLocation: this.props.dataLocation,
-            navigationId: this.props.navigationId,
+            navigationConfigId: this.props.navigationConfigId,
+            dictionaryId: this.props.dictionaryId,
             navigation: this.props.navigation,
             schemaLocation: this.props.schemaLocation,
             disabled: this.props.disabled,

@@ -3,6 +3,7 @@ import { FoundationProps } from "@microsoft/fast-components-foundation-react";
 import manageJss, { ManagedJSSProps } from "@microsoft/fast-jss-manager-react";
 import BaseNavigation from "./navigation";
 import NavigationStyles, { NavigationClassNameContract } from "./navigation.style";
+import { navigationDictionaryLink } from "./navigation.props";
 
 /*
  * The type returned by manageJss type is very complicated so we'll let the
@@ -12,5 +13,5 @@ import NavigationStyles, { NavigationClassNameContract } from "./navigation.styl
 const Navigation = manageJss(NavigationStyles)(BaseNavigation);
 type Navigation = InstanceType<typeof Navigation>;
 
-export { Navigation };
+export { Navigation, navigationDictionaryLink };
 export * from "./navigation.props";

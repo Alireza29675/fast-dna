@@ -1,4 +1,7 @@
-import { NavigationDataType } from "./navigation.props";
+import {
+    TreeNavigationConfig,
+    TreeNavigationItem,
+} from "../message-system/navigation.props";
 
 export enum VerticalDragDirection {
     up,
@@ -9,6 +12,8 @@ export enum VerticalDragDirection {
 export interface NavigationTreeItemProps
     extends NavigationTreeItemDragSourceCollectedProps,
         NavigationTreeItemDropTargetCollectedProps {
+    item: TreeNavigationItem;
+
     /**
      * The React children
      */
@@ -17,22 +22,27 @@ export interface NavigationTreeItemProps
     /**
      * The class
      */
-    className: (dragging: boolean) => string;
+    contentClassName: () => string;
 
     /**
-     * The class for the content
+     *
      */
-    contentClassName: string;
+    linkClassName: (dragging: boolean) => string;
 
-    /**
-     * The class for the expand trigger
-     */
-    expandTriggerClassName: string;
+    // /**
+    //  * The class for the content
+    //  */
+    // contentClassName: string;
 
-    /**
-     * A string representing the data location in lodash notation
-     */
-    dataLocation: string;
+    // /**
+    //  * The class for the expand trigger
+    //  */
+    // expandTriggerClassName: string;
+
+    // /**
+    //  * A string representing the data location in lodash notation
+    //  */
+    // dataLocation: string;
 
     /**
      * The expanded state
@@ -44,68 +54,72 @@ export interface NavigationTreeItemProps
      */
     handleClick: React.MouseEventHandler<HTMLElement>;
 
-    /**
-     * The click handler for selecting an item
-     */
-    handleSelectionClick: React.MouseEventHandler<HTMLElement>;
+    dictionaryId: string;
+
+    navigationConfigId: string;
+
+    // /**
+    //  * The click handler for selecting an item
+    //  */
+    // handleSelectionClick: React.MouseEventHandler<HTMLElement>;
 
     /**
      * The keyDown handler
      */
     handleKeyDown: React.KeyboardEventHandler<HTMLElement>;
 
-    /**
-     * The handler for closing dragging items
-     */
-    handleCloseDraggingItem: (dataLocation: string, type: NavigationDataType) => void;
+    // /**
+    //  * The handler for closing dragging items
+    //  */
+    // handleCloseDraggingItem: (dataLocation: string, type: NavigationDataType) => void;
 
-    /**
-     * The text used for the tree item
-     */
-    text: string;
+    // /**
+    //  * The text used for the tree item
+    //  */
+    // text: string;
 
-    /**
-     * The type of data this tree item represents
-     */
-    type: NavigationDataType;
+    // /**
+    //  * The type of data this tree item represents
+    //  */
+    // type: NavigationDataType;
 
-    /**
-     * The drag hover state
-     */
-    dragHover: boolean;
+    // /**
+    //  * The drag hover state
+    //  */
+    // dragHover: boolean;
 
-    /**
-     * The drag hover before state
-     */
-    dragHoverBefore: boolean;
+    // /**
+    //  * The drag hover before state
+    //  */
+    // dragHoverBefore: boolean;
 
-    /**
-     * The drag hover after state
-     */
-    dragHoverAfter: boolean;
+    // /**
+    //  * The drag hover after state
+    //  */
+    // dragHoverAfter: boolean;
 
-    /**
-     * The onChange callback for updating the data
-     */
-    onChange: (
-        sourceDataLocation: string,
-        targetDataLocation: string,
-        type?: NavigationDataType,
-        direction?: VerticalDragDirection
-    ) => void;
+    // /**
+    //  * The onChange callback for updating the data
+    //  */
+    // onChange: (
+    //     sourceDataLocation: string,
+    //     targetDataLocation: string,
+    //     type?: NavigationDataType,
+    //     direction?: VerticalDragDirection
+    // ) => void;
 
-    /**
-     * The hover callback for dragging
-     */
-    onDragHover: (dataLocation: string, direction?: VerticalDragDirection) => void;
+    // /**
+    //  * The hover callback for dragging
+    //  */
+    // onDragHover: (dataLocation: string, direction?: VerticalDragDirection) => void;
 
-    /**
-     * The class for hovering when dragging
-     */
-    getContentDragHoverClassName: (
-        type: NavigationDataType,
-        direction?: VerticalDragDirection
-    ) => string;
+    // /**
+    //  * The class for hovering when dragging
+    //  */
+    // getContentDragHoverClassName: (
+    //     type: NavigationDataType,
+    //     direction?: VerticalDragDirection
+    // ) => string;
 }
 
 export interface NavigationTreeItemDragSourceCollectedProps {
@@ -120,5 +134,6 @@ export interface NavigationTreeItemDropTargetCollectedProps {
 }
 
 export interface NavigationTreeItemDragObject {
-    dataLocation: string;
+    dictionaryId: string;
+    navigationConfigId: string;
 }

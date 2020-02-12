@@ -39,8 +39,8 @@ import { SchemaDictionary } from "./schema.props";
 
 let dataDictionary: DataDictionary<unknown>;
 let navigationDictionary: TreeNavigationConfigDictionary;
-let navigationActiveId: string;
-let activeId: string; // this controls both the data and navigation dictionaries which must remain in sync
+let activeNavigationConfigId: string;
+let activeDictionaryId: string; // this controls both the data and navigation dictionaries which must remain in sync
 let schemaDictionary: SchemaDictionary;
 
 export function getMessage(data: MessageSystemIncoming): MessageSystemOutgoing {
@@ -55,20 +55,24 @@ export function getMessage(data: MessageSystemIncoming): MessageSystemOutgoing {
             return getNavigationDictionaryMessage(data);
         case MessageSystemType.initialize:
             dataDictionary = data.data;
-            activeId = dataDictionary[1];
+            activeDictionaryId = dataDictionary[1];
             schemaDictionary = data.schemas;
             navigationDictionary = getNavigationDictionary(
                 schemaDictionary,
                 dataDictionary
             );
-            navigationActiveId = navigationDictionary[0][navigationDictionary[1]][1];
+            activeNavigationConfigId =
+                navigationDictionary[0][navigationDictionary[1]][1];
 
             return {
                 type: MessageSystemType.initialize,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
-                activeId: navigationActiveId,
-                schema: schemaDictionary[dataDictionary[0][activeId].schemaId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                dataDictionary,
+                navigation: navigationDictionary[0][activeDictionaryId],
+                navigationDictionary,
+                activeDictionaryId,
+                activeNavigationConfigId,
+                schema: schemaDictionary[dataDictionary[0][activeDictionaryId].schemaId],
             };
     }
 }
@@ -85,15 +89,15 @@ function getDataDictionaryMessage(
                 type: MessageSystemType.dataDictionary,
                 action: MessageSystemDataDictionaryTypeAction.get,
                 dataDictionary,
-                activeId,
+                activeDictionaryId,
             };
         case MessageSystemDataDictionaryTypeAction.updateActiveId:
-            activeId = data.activeId;
+            activeDictionaryId = data.activeDictionaryId;
 
             return {
                 type: MessageSystemType.dataDictionary,
                 action: MessageSystemDataDictionaryTypeAction.updateActiveId,
-                activeId,
+                activeDictionaryId,
             };
     }
 }
@@ -110,15 +114,15 @@ function getNavigationDictionaryMessage(
                 type: MessageSystemType.navigationDictionary,
                 action: MessageSystemNavigationDictionaryTypeAction.get,
                 navigationDictionary,
-                activeId,
+                activeDictionaryId,
             };
         case MessageSystemNavigationDictionaryTypeAction.updateActiveId:
-            activeId = data.activeId;
+            activeDictionaryId = data.activeDictionaryId;
 
             return {
                 type: MessageSystemType.navigationDictionary,
                 action: MessageSystemNavigationDictionaryTypeAction.updateActiveId,
-                activeId,
+                activeDictionaryId,
             };
     }
 }
@@ -129,9 +133,9 @@ function getNavigationDictionaryMessage(
 function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
     switch (data.action) {
         case MessageSystemDataTypeAction.duplicate:
-            dataDictionary[0][activeId].data = getDataWithDuplicate(
+            dataDictionary[0][activeDictionaryId].data = getDataWithDuplicate(
                 data.sourceDataLocation,
-                dataDictionary[0][activeId].data
+                dataDictionary[0][activeDictionaryId].data
             );
             navigationDictionary = getNavigationDictionary(
                 schemaDictionary,
@@ -142,13 +146,13 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.duplicate,
                 sourceDataLocation: data.sourceDataLocation,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
         case MessageSystemDataTypeAction.remove:
-            dataDictionary[0][activeId].data = getDataUpdatedWithoutSourceData({
+            dataDictionary[0][activeDictionaryId].data = getDataUpdatedWithoutSourceData({
                 sourceDataLocation: data.dataLocation,
-                data: dataDictionary[0][activeId].data,
+                data: dataDictionary[0][activeDictionaryId].data,
             });
             navigationDictionary = getNavigationDictionary(
                 schemaDictionary,
@@ -158,15 +162,15 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             return {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.remove,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
         case MessageSystemDataTypeAction.add:
-            dataDictionary[0][activeId].data = getDataUpdatedWithSourceData({
+            dataDictionary[0][activeDictionaryId].data = getDataUpdatedWithSourceData({
                 targetDataLocation: data.dataLocation,
                 targetDataType: data.dataType,
                 sourceData: data.data,
-                data: dataDictionary[0][activeId].data,
+                data: dataDictionary[0][activeDictionaryId].data,
             });
             navigationDictionary = getNavigationDictionary(
                 schemaDictionary,
@@ -176,15 +180,15 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             return {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.add,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
         case MessageSystemDataTypeAction.update:
             if (data.dataLocation === "") {
-                dataDictionary[0][activeId].data = data.data;
+                dataDictionary[0][activeDictionaryId].data = data.data;
             } else {
                 set(
-                    dataDictionary[0][activeId].data as object,
+                    dataDictionary[0][activeDictionaryId].data as object,
                     data.dataLocation,
                     data.data
                 );
@@ -198,8 +202,8 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             return {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.update,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
         case MessageSystemDataTypeAction.addChildren:
             const childrenRefs: Children[] = [];
@@ -211,7 +215,7 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             });
             // update the parent to include the added children
             let currentChildrenRefs: Children[] | void = get(
-                dataDictionary[0][activeId].data,
+                dataDictionary[0][activeDictionaryId].data,
                 data.dataLocation
             );
 
@@ -222,7 +226,7 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             }
 
             set(
-                dataDictionary[0][activeId].data as object,
+                dataDictionary[0][activeDictionaryId].data as object,
                 data.dataLocation,
                 currentChildrenRefs
             );
@@ -230,8 +234,8 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             return {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.addChildren,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
         case MessageSystemDataTypeAction.removeChildren:
             // remove children from the dictionary
@@ -240,7 +244,7 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             });
 
             let filteredChildrenRefs: Children[] = get(
-                dataDictionary[0][activeId].data,
+                dataDictionary[0][activeDictionaryId].data,
                 data.dataLocation,
                 []
             );
@@ -258,7 +262,7 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             );
 
             set(
-                dataDictionary[0][activeId].data as object,
+                dataDictionary[0][activeDictionaryId].data as object,
                 data.dataLocation,
                 filteredChildrenRefs
             );
@@ -266,8 +270,8 @@ function getDataMessage(data: DataMessageIncoming): DataMessageOutgoing {
             return {
                 type: MessageSystemType.data,
                 action: MessageSystemDataTypeAction.removeChildren,
-                data: dataDictionary[0][activeId].data,
-                navigation: navigationDictionary[0][activeId],
+                data: dataDictionary[0][activeDictionaryId].data,
+                navigation: navigationDictionary[0][activeDictionaryId],
             };
     }
 }
@@ -277,19 +281,21 @@ function getNavigationMessage(
 ): NavigationMessageOutgoing {
     switch (data.action) {
         case MessageSystemNavigationTypeAction.update:
-            navigationActiveId = data.activeId;
+            activeNavigationConfigId = data.activeDictionaryId;
 
             return {
                 type: MessageSystemType.navigation,
                 action: MessageSystemNavigationTypeAction.update,
-                activeId: data.activeId,
+                activeDictionaryId: data.activeDictionaryId,
+                activeNavigationConfigId: data.activeNavigationConfigId,
             };
         case MessageSystemNavigationTypeAction.get:
             return {
                 type: MessageSystemType.navigation,
                 action: MessageSystemNavigationTypeAction.get,
-                activeId: navigationActiveId,
-                navigation: activeId[0][activeId],
+                activeDictionaryId,
+                activeNavigationConfigId,
+                navigation: activeDictionaryId[0][activeDictionaryId],
             };
     }
 }

@@ -13,24 +13,19 @@ import Foundation, {
     FoundationProps,
     HandledProps,
 } from "@microsoft/fast-components-foundation-react";
-import { cloneDeep, get, set, unset } from "lodash-es";
+import { get } from "lodash-es";
 import { canUseDOM } from "exenv-es6";
 import {
-    NavigationDataType,
+    navigationDictionaryLink,
     NavigationHandledProps,
     NavigationProps,
     NavigationState,
-    TreeNavigation,
 } from "./navigation.props";
-import { getNavigationFromData, getUpdatedData } from "./navigation.utilities";
-import { getDataWithDuplicate } from "../data-utilities/duplicate";
-import { isInArray } from "../data-utilities/array";
 import { DraggableNavigationTreeItem, NavigationTreeItem } from "./navigation-tree-item";
-import {
-    NavigationTreeItemProps,
-    VerticalDragDirection,
-} from "./navigation-tree-item.props";
-import { normalizeDataLocationToDotNotation } from "../data-utilities/location";
+import { NavigationTreeItemProps } from "./navigation-tree-item.props";
+import { Register } from "../message-system/message-system.props";
+import { MessageSystemType } from "../message-system";
+import { MessageSystemNavigationTypeAction } from "../message-system/message-system.utilities.props";
 
 export default class Navigation extends Foundation<
     NavigationHandledProps,
@@ -39,67 +34,35 @@ export default class Navigation extends Foundation<
 > {
     public static displayName: string = "Navigation";
 
-    public static getDerivedStateFromProps(
-        props: NavigationProps,
-        state: NavigationState
-    ): Partial<NavigationState> {
-        const updatedState: Partial<NavigationState> = {};
-        const updatedNavigation: TreeNavigation = getNavigationFromData(
-            props.data,
-            props.schema,
-            props.childOptions
-        );
-
-        if (props.dataLocation !== state.activeItem && props.dataLocation !== undefined) {
-            updatedState.activeItem = props.dataLocation;
-
-            // openItems is cast as any due to missing type on string array
-            if (
-                typeof props.dataLocation === "string" &&
-                !(state.openItems as any).includes(props.dataLocation)
-            ) {
-                updatedState.openItems = state.openItems;
-                updatedState.openItems.push(props.dataLocation);
-            }
-        }
-
-        if (updatedNavigation !== state.navigation) {
-            updatedState.navigation = updatedNavigation;
-        }
-
-        return updatedState;
-    }
-
     protected handledProps: HandledProps<NavigationHandledProps> = {
-        schema: void 0,
-        data: void 0,
+        messageSystem: void 0,
         dragAndDropReordering: void 0,
-        childOptions: void 0,
-        onChange: void 0,
-        onLocationUpdate: void 0,
-        dataLocation: void 0,
         managedClasses: void 0,
     };
+
+    private messageSystemConfig: Register;
 
     private rootElement: React.RefObject<HTMLDivElement>;
 
     constructor(props: NavigationProps) {
         super(props);
 
+        this.messageSystemConfig = {
+            onMessage: this.handleMessageSystem,
+        };
+
+        if (props.messageSystem !== undefined) {
+            props.messageSystem.add(this.messageSystemConfig);
+        }
+
         this.state = {
-            navigation: getNavigationFromData(
-                this.props.data,
-                this.props.schema,
-                this.props.childOptions
-            ),
-            openItems:
-                this.props.dataLocation !== undefined ? [this.props.dataLocation] : [],
-            activeItem:
-                this.props.dataLocation !== undefined ? this.props.dataLocation : null,
-            dragHoverDataLocation: null,
-            dragHoverAfterDataLocation: null,
-            dragHoverBeforeDataLocation: null,
-            dragHoverCenterDataLocation: null,
+            navigationDictionary: null,
+            activeItem: null,
+            expandedNavigationConfigItems: {},
+            //     dragHoverDataLocation: null,
+            //     dragHoverAfterDataLocation: null,
+            //     dragHoverBeforeDataLocation: null,
+            //     dragHoverCenterDataLocation: null,
         };
 
         this.rootElement = React.createRef();
@@ -113,178 +76,386 @@ export default class Navigation extends Foundation<
                 role={"tree"}
                 className={this.props.managedClasses.navigation}
             >
-                {this.renderTreeItem(this.state.navigation, 1, 1, 0)}
+                {this.renderDictionaryItem(
+                    this.state.navigationDictionary
+                        ? this.state.navigationDictionary[1]
+                        : null
+                )}
             </div>
         );
     }
 
     /**
-     * Renders the tree item containing element
+     * Handle messages from the message system
      */
-    private renderTreeItemContainer(
-        navigation: TreeNavigation[],
-        level: number
-    ): React.ReactNode {
-        return (
-            <div className={this.props.managedClasses.navigation_itemList} role={"group"}>
-                {this.renderTreeItems(navigation, level + 1)}
-            </div>
-        );
-    }
+    private handleMessageSystem = (e: MessageEvent): void => {
+        switch (e.data.type) {
+            case MessageSystemType.initialize:
+                this.setState({
+                    navigationDictionary: e.data.navigationDictionary,
+                    activeItem: [
+                        e.data.navigationDictionary[1],
+                        e.data.navigationDictionary[0][e.data.navigationDictionary[1]][1],
+                    ],
+                });
 
-    /**
-     * Renders a tree item
-     */
-    private renderTreeItem(
-        navigation: TreeNavigation,
-        level: number,
-        navigationLength: number,
-        index: number
-    ): React.ReactNode {
-        const dataLocation: string = navigation.dataLocation;
-        const dataType: NavigationDataType = navigation.type;
-        const isRootDataLocation: boolean = dataLocation === "";
-        const props: NavigationTreeItemProps = {
-            className: this.getItemClassName(dataType),
-            contentClassName: this.getItemContentClassName(dataLocation),
-            expandTriggerClassName: this.getItemExpandTriggerClassName(),
-            getContentDragHoverClassName: this.getItemContentDragHoverClassName,
-            dataLocation,
-            dragHover:
-                !isRootDataLocation && dataLocation === this.state.dragHoverDataLocation,
-            dragHoverBefore:
-                !isRootDataLocation &&
-                dataLocation === this.state.dragHoverBeforeDataLocation,
-            dragHoverAfter:
-                !isRootDataLocation &&
-                dataLocation === this.state.dragHoverAfterDataLocation,
-            expanded: this.isExpanded(dataLocation),
-            handleClick: this.handleTreeItemClick(dataLocation, dataType),
-            handleKeyDown: this.handleTreeItemKeyDown(dataLocation, dataType),
-            handleSelectionClick: this.handleTreeItemSelectionClick(dataLocation),
-            handleCloseDraggingItem: this.handleCloseDraggingTreeItem,
-            text: navigation.text,
-            type: dataType,
-            onChange: this.handleChange,
-            onDragHover: this.handleDragHover,
-        };
-        const children: React.ReactNode =
-            Array.isArray(navigation.items) && navigationLength > 0
-                ? this.renderTreeItemContainer(navigation.items, level)
-                : void 0;
+                break;
+            case MessageSystemType.data:
+                break;
+            case MessageSystemType.navigation:
+                this.setState({
+                    activeItem: [
+                        e.data.activeDictionaryId,
+                        e.data.activeNavigationConfigId,
+                    ],
+                });
+                break;
+        }
+    };
 
-        // Directly nest React children which use the "children" property
-        if (dataLocation === "children" || dataLocation.endsWith("props.children")) {
-            if (Array.isArray(navigation.items) && navigationLength > 0) {
-                return this.renderTreeItems(navigation.items, level + 1);
-            }
+    private renderDictionaryItem(dictionaryKey: string | null): React.ReactNode {
+        if (this.state.navigationDictionary !== null) {
+            return this.renderNavigationConfig(
+                dictionaryKey,
+                this.state.navigationDictionary[0][dictionaryKey][1]
+            );
         }
 
-        if (this.props.dragAndDropReordering) {
+        return null;
+    }
+
+    private renderNavigationConfig(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): React.ReactNode {
+        const hasContent: boolean =
+            (Array.isArray(
+                this.state.navigationDictionary[0][dictionaryKey][0][navigationConfigKey]
+                    .items
+            ) &&
+                this.state.navigationDictionary[0][dictionaryKey][0][navigationConfigKey]
+                    .items.length > 0) ||
+            (this.state.navigationDictionary[0][dictionaryKey][0][navigationConfigKey]
+                .schema[navigationDictionaryLink] &&
+                this.state.navigationDictionary[0][dictionaryKey][0][navigationConfigKey]
+                    .data);
+        const navigationProps: NavigationTreeItemProps = {
+            linkClassName: this.getItemLinkClassName(dictionaryKey, navigationConfigKey),
+            contentClassName: this.getItemContentClassName(),
+            item: this.state.navigationDictionary[0][dictionaryKey][0][
+                navigationConfigKey
+            ],
+
+            expanded: this.getExpandedState(dictionaryKey, navigationConfigKey),
+            handleClick: this.handleNavigationItemClick(
+                dictionaryKey,
+                navigationConfigKey
+            ),
+            handleKeyDown: this.handleTreeItemKeyDown(dictionaryKey, navigationConfigKey),
+            dictionaryId: dictionaryKey,
+            navigationConfigId: navigationConfigKey,
+        };
+        const navigationTreeItemChildren: React.ReactNode = [
+            this.renderNavigationConfigTrigger(
+                dictionaryKey,
+                navigationConfigKey,
+                hasContent
+            ),
+            this.renderNavigationConfigContent(
+                dictionaryKey,
+                navigationConfigKey,
+                hasContent
+            ),
+        ];
+
+        if (
+            this.props.dragAndDropReordering &&
+            this.state.navigationDictionary[1] !== dictionaryKey && // this is not the root level dictionary item
+            this.state.navigationDictionary[0][dictionaryKey][1] === navigationConfigKey // this is a dictionary item
+        ) {
             return (
-                <DraggableNavigationTreeItem {...props} key={index}>
-                    {children}
+                <DraggableNavigationTreeItem
+                    key={dictionaryKey + navigationConfigKey}
+                    {...navigationProps}
+                >
+                    {navigationTreeItemChildren}
                 </DraggableNavigationTreeItem>
             );
         }
 
         return (
-            <NavigationTreeItem {...props} key={index}>
-                {children}
+            <NavigationTreeItem
+                key={dictionaryKey + navigationConfigKey}
+                {...navigationProps}
+            >
+                {navigationTreeItemChildren}
             </NavigationTreeItem>
         );
     }
 
-    /**
-     * Handles a data update from dragging
-     */
-    private handleChange = (
-        sourceDataLocation: string,
-        targetDataLocation: string,
-        type: NavigationDataType,
-        direction?: VerticalDragDirection
-    ): void => {
-        if (typeof this.props.onChange === "function") {
-            this.props.onChange(
-                getUpdatedData({
-                    targetDataLocation,
-                    sourceDataLocation,
-                    direction,
-                    type,
-                    data: this.props.data,
-                })
+    private renderNavigationConfigTrigger(
+        dictionaryKey: string,
+        navigationConfigKey: string,
+        hasContent: boolean
+    ): React.ReactNode {
+        if (
+            typeof this.state.navigationDictionary[0][dictionaryKey][0][
+                navigationConfigKey
+            ].data !== "undefined" &&
+            this.state.navigationDictionary[0][dictionaryKey][0][navigationConfigKey]
+                .schema[navigationDictionaryLink]
+        ) {
+            return this.state.navigationDictionary[0][dictionaryKey][0][
+                navigationConfigKey
+            ].data.map((dictionaryItem: any) => {
+                return (
+                    <React.Fragment key={dictionaryItem.id}>
+                        <span
+                            className={this.getItemDisplayTextClassName(
+                                dictionaryKey,
+                                navigationConfigKey
+                            )}
+                            onKeyDown={this.handleTreeItemKeyDown(
+                                dictionaryKey,
+                                navigationConfigKey
+                            )}
+                            data-dictionaryid={dictionaryKey}
+                            data-navigationconfigid={navigationConfigKey}
+                            tabIndex={0}
+                        >
+                            <button
+                                className={this.getItemExpandTriggerClassName()}
+                                onClick={this.handleToggleNavigationItem(
+                                    dictionaryKey,
+                                    navigationConfigKey
+                                )}
+                            />
+                            <span
+                                onClick={this.handleNavigationItemClick(
+                                    dictionaryKey,
+                                    navigationConfigKey
+                                )}
+                            >
+                                {
+                                    this.state.navigationDictionary[0][dictionaryKey][0][
+                                        navigationConfigKey
+                                    ].text
+                                }
+                            </span>
+                        </span>
+                        <div className={this.props.managedClasses.navigation_itemList}>
+                            {this.renderDictionaryItem(dictionaryItem.id)}
+                        </div>
+                    </React.Fragment>
+                );
+            });
+        }
+
+        if (hasContent) {
+            return (
+                <span
+                    key={"trigger"}
+                    className={this.getItemDisplayTextClassName(
+                        dictionaryKey,
+                        navigationConfigKey
+                    )}
+                    onKeyDown={this.handleTreeItemKeyDown(
+                        dictionaryKey,
+                        navigationConfigKey
+                    )}
+                    data-dictionaryid={dictionaryKey}
+                    data-navigationconfigid={navigationConfigKey}
+                    tabIndex={0}
+                >
+                    <button
+                        className={this.getItemExpandTriggerClassName()}
+                        onClick={this.handleToggleNavigationItem(
+                            dictionaryKey,
+                            navigationConfigKey
+                        )}
+                    />
+                    <span
+                        onClick={this.handleNavigationItemClick(
+                            dictionaryKey,
+                            navigationConfigKey
+                        )}
+                    >
+                        {
+                            this.state.navigationDictionary[0][dictionaryKey][0][
+                                navigationConfigKey
+                            ].text
+                        }
+                    </span>
+                </span>
             );
         }
-    };
 
-    /**
-     * Handles the hovering of an element when dragging
-     */
-    private handleDragHover = (
-        dragHoverDataLocation: string,
-        direction?: VerticalDragDirection
-    ): void => {
-        const state: Partial<NavigationState> = {
-            dragHoverDataLocation,
-            dragHoverBeforeDataLocation:
-                direction === VerticalDragDirection.up ? dragHoverDataLocation : null,
-            dragHoverAfterDataLocation:
-                direction === VerticalDragDirection.down ? dragHoverDataLocation : null,
-            dragHoverCenterDataLocation:
-                direction === VerticalDragDirection.center ? dragHoverDataLocation : null,
-        };
-
-        if (
-            this.state.dragHoverDataLocation !== state.dragHoverDataLocation ||
-            this.state.dragHoverAfterDataLocation !== state.dragHoverAfterDataLocation ||
-            this.state.dragHoverBeforeDataLocation !==
-                state.dragHoverBeforeDataLocation ||
-            this.state.dragHoverCenterDataLocation !== state.dragHoverCenterDataLocation
-        ) {
-            this.setState(state as NavigationState);
-        }
-    };
-
-    /**
-     * Renders tree items
-     */
-    private renderTreeItems(
-        navigation: TreeNavigation[],
-        level: number
-    ): React.ReactNode {
-        // Sort items so that childrenItems are weighted towards the top
-        const sortedNavigation: TreeNavigation[] = navigation.sort(
-            (a: TreeNavigation, b: TreeNavigation) => {
-                return a.type === NavigationDataType.children &&
-                    b.type === NavigationDataType.children
-                    ? 0
-                    : a.type === NavigationDataType.children
-                        ? 1
-                        : b.type !== NavigationDataType.children
-                            ? 0
-                            : -1;
-            }
+        return (
+            <span
+                key={"trigger"}
+                className={this.getItemDisplayTextClassName(
+                    dictionaryKey,
+                    navigationConfigKey
+                )}
+            >
+                {
+                    this.state.navigationDictionary[0][dictionaryKey][0][
+                        navigationConfigKey
+                    ].text
+                }
+            </span>
         );
-
-        return sortedNavigation.map((navigationItem: TreeNavigation, index: number) => {
-            const navigationLength: number = navigation.length;
-
-            return this.renderTreeItem(navigationItem, level, navigationLength, index);
-        });
     }
 
-    private findCurrentTreeItemIndex(nodes: HTMLElement[], dataLocation: string): number {
+    private renderNavigationConfigContent(
+        dictionaryKey: string,
+        navigationConfigKey: string,
+        hasContent: boolean
+    ): React.ReactNode {
+        if (hasContent) {
+            return (
+                <div
+                    key={"content"}
+                    className={this.props.managedClasses.navigation_itemList}
+                    role={"group"}
+                    aria-expanded={true}
+                >
+                    {this.state.navigationDictionary[0][dictionaryKey][0][
+                        navigationConfigKey
+                    ].items.map((navigationConfigItemKey: string) => {
+                        return this.renderNavigationConfig(
+                            dictionaryKey,
+                            navigationConfigItemKey
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        return [];
+    }
+
+    /**
+     * Toggles the items by adding/removing them from the openItems array
+     */
+    private handleToggleNavigationItem = (
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): (() => void) => {
+        return (): void => {
+            const isNavigationConfigItemExpanded: boolean =
+                this.state.expandedNavigationConfigItems[dictionaryKey] &&
+                this.state.expandedNavigationConfigItems[dictionaryKey].findIndex(
+                    (value: string) => {
+                        return value === navigationConfigKey;
+                    }
+                ) !== -1;
+            const updatedNavigationConfigItems: { [key: string]: string[] } = this.state
+                .expandedNavigationConfigItems;
+
+            if (!isNavigationConfigItemExpanded) {
+                if (Array.isArray(updatedNavigationConfigItems[dictionaryKey])) {
+                    updatedNavigationConfigItems[dictionaryKey] = [
+                        navigationConfigKey,
+                    ].concat(updatedNavigationConfigItems[dictionaryKey]);
+                } else {
+                    updatedNavigationConfigItems[dictionaryKey] = [navigationConfigKey];
+                }
+            } else {
+                updatedNavigationConfigItems[
+                    dictionaryKey
+                ] = updatedNavigationConfigItems[dictionaryKey].filter(
+                    (value: string) => {
+                        return value !== navigationConfigKey;
+                    }
+                );
+            }
+
+            this.setState({
+                expandedNavigationConfigItems: updatedNavigationConfigItems,
+            });
+        };
+    };
+
+    /**
+     * Update the active item
+     */
+    private handleNavigationItemClick = (
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): (() => void) => {
+        return (): void => {
+            this.props.messageSystem.postMessage({
+                type: MessageSystemType.navigation,
+                action: MessageSystemNavigationTypeAction.update,
+                activeDictionaryId: dictionaryKey,
+                activeNavigationConfigId: navigationConfigKey,
+            });
+        };
+    };
+
+    private getExpandedState(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): boolean {
+        return !!(
+            this.state.expandedNavigationConfigItems[dictionaryKey] &&
+            this.state.expandedNavigationConfigItems[dictionaryKey].findIndex(
+                (value: string) => {
+                    return navigationConfigKey === value;
+                }
+            ) !== -1
+        );
+    }
+
+    // /**
+    //  * Handles the hovering of an element when dragging
+    //  */
+    // private handleDragHover = (
+    //     dragHoverDataLocation: string,
+    //     direction?: VerticalDragDirection
+    // ): void => {
+    //     const state: Partial<NavigationState> = {
+    //         dragHoverDataLocation,
+    //         dragHoverBeforeDataLocation:
+    //             direction === VerticalDragDirection.up ? dragHoverDataLocation : null,
+    //         dragHoverAfterDataLocation:
+    //             direction === VerticalDragDirection.down ? dragHoverDataLocation : null,
+    //         dragHoverCenterDataLocation:
+    //             direction === VerticalDragDirection.center ? dragHoverDataLocation : null,
+    //     };
+
+    //     if (
+    //         this.state.dragHoverDataLocation !== state.dragHoverDataLocation ||
+    //         this.state.dragHoverAfterDataLocation !== state.dragHoverAfterDataLocation ||
+    //         this.state.dragHoverBeforeDataLocation !==
+    //             state.dragHoverBeforeDataLocation ||
+    //         this.state.dragHoverCenterDataLocation !== state.dragHoverCenterDataLocation
+    //     ) {
+    //         this.setState(state as NavigationState);
+    //     }
+    // };
+
+    private findCurrentTreeItemIndex(
+        nodes: HTMLElement[],
+        dictionaryId: string,
+        navigationConfigId: string
+    ): number {
         return nodes.findIndex((node: HTMLElement) => {
-            return node.dataset.location === dataLocation;
+            return (
+                node.dataset.dictionaryid === dictionaryId &&
+                node.dataset.navigationconfigid === navigationConfigId
+            );
         });
     }
 
-    private focusNextTreeItem(dataLocation: string): void {
+    private focusNextTreeItem(dictionaryKey: string, navigationConfigKey: string): void {
         if (canUseDOM()) {
             const nodes: HTMLElement[] = this.getTreeItemNodes();
             const currentIndex: number = this.findCurrentTreeItemIndex(
                 nodes,
-                dataLocation
+                dictionaryKey,
+                navigationConfigKey
             );
             const nextIndex: number =
                 currentIndex !== -1 && currentIndex !== nodes.length - 1
@@ -294,12 +465,16 @@ export default class Navigation extends Foundation<
         }
     }
 
-    private focusPreviousTreeItem(dataLocation: string): void {
+    private focusPreviousTreeItem(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): void {
         if (canUseDOM()) {
             const nodes: HTMLElement[] = this.getTreeItemNodes();
             const currentIndex: number = this.findCurrentTreeItemIndex(
                 nodes,
-                dataLocation
+                dictionaryKey,
+                navigationConfigKey
             );
             const previousIndex: number =
                 currentIndex !== -1 && currentIndex !== 0 ? currentIndex - 1 : 0;
@@ -323,32 +498,16 @@ export default class Navigation extends Foundation<
         }
     }
 
-    private focusAndOpenTreeItems(dataLocation: string, type: NavigationDataType): void {
+    private focusAndOpenTreeItems(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): void {
         if (canUseDOM()) {
             const nodes: HTMLElement[] = this.getTreeItemNodes();
             const currentIndex: number = this.findCurrentTreeItemIndex(
                 nodes,
-                dataLocation
-            );
-            const ariaExpanded: string = get(
-                nodes[currentIndex],
-                'parentElement.attributes["aria-expanded"].value'
-            );
-
-            if (ariaExpanded === "true" && nodes[currentIndex + 1]) {
-                nodes[currentIndex + 1].focus();
-            } else if (ariaExpanded === "false") {
-                this.toggleItems(dataLocation, type);
-            }
-        }
-    }
-
-    private focusAndCloseTreeItems(dataLocation: string, type: NavigationDataType): void {
-        if (canUseDOM()) {
-            const nodes: HTMLElement[] = this.getTreeItemNodes();
-            const currentIndex: number = this.findCurrentTreeItemIndex(
-                nodes,
-                dataLocation
+                dictionaryKey,
+                navigationConfigKey
             );
             const ariaExpanded: string = get(
                 nodes[currentIndex],
@@ -356,58 +515,87 @@ export default class Navigation extends Foundation<
             );
 
             if (
-                ariaExpanded === "false" &&
-                nodes[currentIndex - 1] &&
-                (nodes[currentIndex - 1] === nodes[currentIndex].parentElement ||
-                    nodes[currentIndex - 1].parentElement ===
-                        get(
-                            nodes[currentIndex],
-                            "parentElement.parentElement.parentElement"
-                        ))
+                nodes[currentIndex].tagName !== "A" &&
+                ariaExpanded === "true" &&
+                nodes[currentIndex + 1]
             ) {
-                nodes[currentIndex - 1].focus();
-            } else if (ariaExpanded === "true") {
-                this.toggleItems(dataLocation, type);
-            } else if (ariaExpanded === undefined && nodes[currentIndex - 1]) {
-                nodes[currentIndex - 1].focus();
+                nodes[currentIndex + 1].focus();
+            } else if (ariaExpanded === "false") {
+                this.handleToggleNavigationItem(dictionaryKey, navigationConfigKey)();
             }
         }
     }
 
-    private getItemClassName(
-        dataType: NavigationDataType
+    private focusAndCloseTreeItems(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): void {
+        if (canUseDOM()) {
+            const nodes: HTMLElement[] = this.getTreeItemNodes();
+            const currentIndex: number = this.findCurrentTreeItemIndex(
+                nodes,
+                dictionaryKey,
+                navigationConfigKey
+            );
+            const ariaExpanded: string = get(
+                nodes[currentIndex],
+                'parentElement.attributes["aria-expanded"].value'
+            );
+
+            if (nodes[currentIndex].tagName === "A") {
+                const parent: HTMLElement = get(
+                    nodes[currentIndex],
+                    "parentElement.parentElement.firstChild"
+                );
+
+                parent.focus();
+            } else if (ariaExpanded === "false") {
+                nodes[currentIndex - 1].focus();
+            } else if (ariaExpanded === "true") {
+                this.handleToggleNavigationItem(dictionaryKey, navigationConfigKey)();
+            }
+        }
+    }
+
+    private getItemLinkClassName(
+        dictionaryKey: string,
+        navigationConfigKey: string
     ): (dragging: boolean) => string {
         return (dragging: boolean): string => {
             let classes: string = this.props.managedClasses.navigation_item;
 
-            if (
-                dataType === NavigationDataType.component ||
-                dataType === NavigationDataType.primitiveChild
-            ) {
+            if (this.props.dragAndDropReordering) {
                 classes = `${classes} ${get(
                     this.props,
-                    `managedClasses.navigation_item__${dataType}`,
+                    "managedClasses.navigation_item__draggable",
                     ""
                 )}`;
 
-                if (this.props.dragAndDropReordering) {
+                if (dragging) {
                     classes = `${classes} ${get(
                         this.props,
-                        "managedClasses.navigation_item__draggable",
+                        "managedClasses.navigation_item__dragging",
                         ""
                     )}`;
-
-                    if (dragging) {
-                        classes = `${classes} ${get(
-                            this.props,
-                            "managedClasses.navigation_item__dragging",
-                            ""
-                        )}`;
-                    }
                 }
             }
 
+            if (
+                this.state.activeItem[0] === dictionaryKey &&
+                this.state.activeItem[1] === navigationConfigKey
+            ) {
+                classes = `${classes} ${
+                    this.props.managedClasses.navigation_itemText__active
+                }`;
+            }
+
             return classes;
+        };
+    }
+
+    private getItemContentClassName(): () => string {
+        return (): string => {
+            return this.props.managedClasses.navigation_item;
         };
     }
 
@@ -415,66 +603,70 @@ export default class Navigation extends Foundation<
         return get(this.props, "managedClasses.navigation_itemExpandTrigger", "");
     }
 
-    private getItemContentClassName(dataLocation: string): string {
-        let classes: string = this.props.managedClasses.navigation_itemContent;
+    private getItemDisplayTextClassName(
+        dictionaryKey: string,
+        navigationConfigKey: string
+    ): string {
+        let classes: string = this.props.managedClasses.navigation_itemText;
 
-        if (dataLocation === this.state.activeItem) {
-            classes = `${classes} ${get(
-                this.props,
-                "managedClasses.navigation_itemContent__active",
-                ""
-            )}`;
+        if (
+            dictionaryKey === this.state.activeItem[0] &&
+            navigationConfigKey === this.state.activeItem[1]
+        ) {
+            classes = `${classes} ${
+                this.props.managedClasses.navigation_itemText__active
+            }`;
         }
 
         return classes;
     }
 
-    private getItemContentDragHoverClassName = (
-        type: NavigationDataType,
-        verticalDragDirection?: VerticalDragDirection
-    ): string => {
-        let classNames: string = "";
+    // private getItemContentDragHoverClassName = (
+    //     type: NavigationDataType,
+    //     verticalDragDirection?: VerticalDragDirection
+    // ): string => {
+    //     let classNames: string = "";
 
-        if (
-            verticalDragDirection === VerticalDragDirection.center &&
-            (type === NavigationDataType.children ||
-                type === NavigationDataType.component ||
-                type === NavigationDataType.primitiveChild)
-        ) {
-            classNames += `${get(
-                this.props,
-                "managedClasses.navigation_itemContent__dragHover",
-                ""
-            )}`;
-        } else if (
-            typeof verticalDragDirection !== "undefined" &&
-            verticalDragDirection !== VerticalDragDirection.center
-        ) {
-            classNames += ` ${
-                verticalDragDirection === VerticalDragDirection.up
-                    ? this.getItemContentDragHoverBeforeClassName()
-                    : this.getItemContentDragHoverAfterClassName()
-            }`;
-        }
+    //     if (
+    //         verticalDragDirection === VerticalDragDirection.center &&
+    //         (type === NavigationDataType.children ||
+    //             type === NavigationDataType.component ||
+    //             type === NavigationDataType.primitiveChild)
+    //     ) {
+    //         classNames += `${get(
+    //             this.props,
+    //             "managedClasses.navigation_itemContent__dragHover",
+    //             ""
+    //         )}`;
+    //     } else if (
+    //         typeof verticalDragDirection !== "undefined" &&
+    //         verticalDragDirection !== VerticalDragDirection.center
+    //     ) {
+    //         classNames += ` ${
+    //             verticalDragDirection === VerticalDragDirection.up
+    //                 ? this.getItemContentDragHoverBeforeClassName()
+    //                 : this.getItemContentDragHoverAfterClassName()
+    //         }`;
+    //     }
 
-        return classNames;
-    };
+    //     return classNames;
+    // };
 
-    private getItemContentDragHoverBeforeClassName = (): string => {
-        return `${get(
-            this.props,
-            "managedClasses.navigation_itemContent__dragHoverBefore",
-            ""
-        )}`;
-    };
+    // private getItemContentDragHoverBeforeClassName = (): string => {
+    //     return `${get(
+    //         this.props,
+    //         "managedClasses.navigation_itemContent__dragHoverBefore",
+    //         ""
+    //     )}`;
+    // };
 
-    private getItemContentDragHoverAfterClassName = (): string => {
-        return `${get(
-            this.props,
-            "managedClasses.navigation_itemContent__dragHoverAfter",
-            ""
-        )}`;
-    };
+    // private getItemContentDragHoverAfterClassName = (): string => {
+    //     return `${get(
+    //         this.props,
+    //         "managedClasses.navigation_itemContent__dragHoverAfter",
+    //         ""
+    //     )}`;
+    // };
 
     private getTreeItemNodes(): HTMLElement[] {
         const nodes: HTMLElement[] = Array.from(
@@ -489,8 +681,8 @@ export default class Navigation extends Foundation<
      * Handles key up on a tree item
      */
     private handleTreeItemKeyDown = (
-        dataLocation: string,
-        type: NavigationDataType
+        dictionaryKey: string,
+        navigationConfigKey: string
     ): ((e: React.KeyboardEvent<HTMLDivElement | HTMLAnchorElement>) => void) => {
         return (e: React.KeyboardEvent<HTMLDivElement | HTMLAnchorElement>): void => {
             e.preventDefault();
@@ -500,20 +692,27 @@ export default class Navigation extends Foundation<
                     case keyCodeEnter:
                     case keyCodeSpace:
                         if (e.target === e.currentTarget) {
-                            this.toggleItems(dataLocation, type);
+                            this.handleToggleNavigationItem(
+                                dictionaryKey,
+                                navigationConfigKey
+                            )();
+                            this.handleNavigationItemClick(
+                                dictionaryKey,
+                                navigationConfigKey
+                            )();
                         }
                         break;
                     case keyCodeArrowDown:
-                        this.focusNextTreeItem(dataLocation);
+                        this.focusNextTreeItem(dictionaryKey, navigationConfigKey);
                         break;
                     case keyCodeArrowUp:
-                        this.focusPreviousTreeItem(dataLocation);
+                        this.focusPreviousTreeItem(dictionaryKey, navigationConfigKey);
                         break;
                     case keyCodeArrowRight:
-                        this.focusAndOpenTreeItems(dataLocation, type);
+                        this.focusAndOpenTreeItems(dictionaryKey, navigationConfigKey);
                         break;
                     case keyCodeArrowLeft:
-                        this.focusAndCloseTreeItems(dataLocation, type);
+                        this.focusAndCloseTreeItems(dictionaryKey, navigationConfigKey);
                         break;
                     case keyCodeHome:
                         this.focusFirstTreeItem();
@@ -522,161 +721,14 @@ export default class Navigation extends Foundation<
                         this.focusLastTreeItem();
                         break;
 
-                    default:
-                        if (e.key.toLowerCase() === "d" && e.ctrlKey) {
-                            e.preventDefault();
-                            this.duplicateCurrentItem(dataLocation, type);
-                        }
-                        break;
+                    // default:
+                    //     if (e.key.toLowerCase() === "d" && e.ctrlKey) {
+                    //         e.preventDefault();
+                    //         this.duplicateCurrentItem(dataLocation, type);
+                    //     }
+                    //     break;
                 }
             }
         };
-    };
-
-    /**
-     * Handles clicking on a tree item
-     */
-    private handleTreeItemClick = (
-        dataLocation: string,
-        type: NavigationDataType
-    ): ((e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement>) => void) => {
-        return (e: React.MouseEvent<HTMLAnchorElement>): void => {
-            e.preventDefault();
-
-            if (e.target === e.currentTarget) {
-                this.toggleItems(dataLocation, type);
-            }
-        };
-    };
-
-    private handleTreeItemSelectionClick = (
-        dataLocation: string
-    ): ((e: React.MouseEvent<HTMLAnchorElement | HTMLDivElement>) => void) => {
-        return (e: React.MouseEvent<HTMLAnchorElement>): void => {
-            e.preventDefault();
-
-            if (e.target === e.currentTarget) {
-                this.selectItem(dataLocation);
-            }
-        };
-    };
-
-    private handleCloseDraggingTreeItem = (
-        dataLocation: string,
-        type: NavigationDataType
-    ): void => {
-        const updatedState: Partial<NavigationState> = {};
-
-        updatedState.openItems = this.state.openItems.filter((openItem: string) => {
-            return openItem.slice(0, dataLocation.length) !== dataLocation;
-        });
-
-        this.setState(updatedState as NavigationState);
-
-        if (
-            typeof this.props.onLocationUpdate === "function" &&
-            type !== NavigationDataType.children
-        ) {
-            this.props.onLocationUpdate(dataLocation);
-        }
-    };
-
-    /**
-     * Toggles the items by adding/removing them from the openItems array
-     */
-    private toggleItems(dataLocation: string, type: NavigationDataType): void {
-        const isExpanded: boolean = this.isExpanded(dataLocation);
-        const updatedState: Partial<NavigationState> = {};
-
-        if (!isExpanded) {
-            updatedState.openItems = this.state.openItems.concat(dataLocation);
-        } else {
-            updatedState.openItems = this.state.openItems.filter((openItem: string) => {
-                return openItem.slice(0, dataLocation.length) !== dataLocation;
-            });
-        }
-
-        if (this.props.dataLocation === undefined) {
-            updatedState.activeItem = dataLocation;
-        }
-
-        this.setState(updatedState as NavigationState);
-
-        if (
-            typeof this.props.onLocationUpdate === "function" &&
-            type !== NavigationDataType.children
-        ) {
-            this.props.onLocationUpdate(dataLocation);
-        }
-    }
-
-    private selectItem(dataLocation: string): void {
-        this.setState({
-            activeItem: dataLocation,
-        });
-
-        if (typeof this.props.onLocationUpdate === "function") {
-            this.props.onLocationUpdate(dataLocation);
-        }
-    }
-
-    /**
-     * Determines if the tree item should be expanded
-     */
-    private isExpanded(dataLocation: string): boolean {
-        if (
-            this.state.openItems.find(
-                (openItem: string) =>
-                    openItem.slice(0, dataLocation.length) === dataLocation
-            ) !== undefined
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Duplicates the item
-     */
-    private duplicateCurrentItem = (
-        dataLocation: string,
-        type: NavigationDataType
-    ): void => {
-        if (
-            type !== NavigationDataType.component &&
-            type !== NavigationDataType.primitiveChild
-        ) {
-            return;
-        }
-
-        if (typeof this.props.onChange === "function") {
-            const isPrimitive: boolean = type === NavigationDataType.primitiveChild;
-            const dataLocationAsDotNotation: string = normalizeDataLocationToDotNotation(
-                dataLocation
-            );
-            const dataLocationSegments: string[] = dataLocationAsDotNotation.split(".");
-            dataLocationSegments.pop();
-            // The root data location ensures that if the data location includes ".props" as part
-            // of its path, this is ignored so that a full component object is copied
-            const rootDataLocation: string = isInArray(
-                this.props.data,
-                dataLocationAsDotNotation.endsWith("props")
-                    ? dataLocationSegments.join(".")
-                    : dataLocationAsDotNotation
-            )
-                ? dataLocationSegments.join(".")
-                : isPrimitive
-                    ? `${dataLocationAsDotNotation}[0]`
-                    : `${dataLocationSegments.join(".")}[0]`;
-
-            this.props.onChange(
-                getDataWithDuplicate(
-                    isPrimitive ? dataLocation : rootDataLocation,
-                    this.props.data
-                ),
-                rootDataLocation
-            );
-        }
     };
 }

@@ -98,7 +98,8 @@ class Form extends React.Component<
         }
 
         this.state = {
-            activeNavigationId: "",
+            activeDictionaryId: "",
+            activeNavigationConfigId: "",
             data: void 0,
             schema: {},
             navigation: void 0,
@@ -139,7 +140,8 @@ class Form extends React.Component<
                     schema: e.data.schema,
                     data: e.data.data,
                     navigation: e.data.navigation,
-                    activeNavigationId: e.data.activeId,
+                    activeDictionaryId: e.data.activeDictionaryId,
+                    activeNavigationConfigId: e.data.activeNavigationConfigId,
                     validationErrors: getValidationErrors(
                         e.data.schema,
                         this.getDataForValidation(this.props, e.data.data)
@@ -158,7 +160,8 @@ class Form extends React.Component<
                 break;
             case MessageSystemType.navigation:
                 this.setState({
-                    activeNavigationId: e.data.activeId,
+                    activeDictionaryId: e.data.activeDictionaryId,
+                    activeNavigationConfigId: e.data.activeNavigationConfigId,
                 });
         }
     };
@@ -329,7 +332,8 @@ class Form extends React.Component<
     private renderBreadcrumbs(): JSX.Element {
         const breadcrumbs: BreadcrumbItem[] = getBreadcrumbs(
             this.state.navigation[0],
-            this.state.activeNavigationId,
+            this.state.activeDictionaryId,
+            this.state.activeNavigationConfigId,
             this.handleBreadcrumbClick
         );
 
@@ -370,7 +374,7 @@ class Form extends React.Component<
     private renderSection(): React.ReactNode {
         let control: BareControlPlugin = this.sectionControl;
         const navigationItem: TreeNavigationItem = this.state.navigation[0][
-            this.state.activeNavigationId
+            this.state.activeNavigationConfigId
         ];
 
         // Check to see if there is any associated `formControlId`
@@ -412,7 +416,8 @@ class Form extends React.Component<
             disabled: get(navigationItem, "schema.disabled"),
             dataLocation: this.state.navigation[0][navigationItem.self]
                 .relativeDataLocation,
-            navigationId: navigationItem.self,
+            navigationConfigId: navigationItem.self,
+            dictionaryId: this.state.activeDictionaryId,
             navigation: this.state.navigation[0],
             untitled: this.untitled,
             validationErrors: this.state.validationErrors,
@@ -424,12 +429,13 @@ class Form extends React.Component<
     }
 
     private handleBreadcrumbClick = (
-        navigationId: string
+        dictionaryId: string,
+        navigationConfigId: string
     ): BreadcrumbItemEventHandler => {
         return (e: React.MouseEvent): void => {
             e.preventDefault();
 
-            this.handleUpdateActiveSection(navigationId);
+            this.handleUpdateActiveSection(dictionaryId, navigationConfigId);
         };
     };
 
@@ -477,12 +483,16 @@ class Form extends React.Component<
     /**
      * Handles an update to the active section and component
      */
-    private handleUpdateActiveSection = (navigationId: string): void => {
+    private handleUpdateActiveSection = (
+        dictionaryId: string,
+        navigationConfigId: string
+    ): void => {
         if (this.props.messageSystem) {
             this.props.messageSystem.postMessage({
                 type: MessageSystemType.navigation,
                 action: MessageSystemNavigationTypeAction.update,
-                activeId: navigationId,
+                activeNavigationConfigId: navigationConfigId,
+                activeDictionaryId: dictionaryId,
             });
         }
     };

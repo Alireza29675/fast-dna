@@ -279,16 +279,19 @@ describe("getMessage", () => {
     });
     describe("navigation", () => {
         test("should return messages sent with navigation updates", () => {
-            const id: string = "foo";
+            const dictionaryId: string = "foo";
+            const navigationConfigId: string = "";
             const message: NavigationMessageOutgoing = getMessage({
                 type: MessageSystemType.navigation,
                 action: MessageSystemNavigationTypeAction.update,
-                activeId: id,
+                activeDictionaryId: dictionaryId,
+                activeNavigationConfigId: navigationConfigId,
             }) as NavigationMessageOutgoing;
 
             expect(message.type).toEqual(MessageSystemType.navigation);
             expect(message.action).toEqual(MessageSystemNavigationTypeAction.update);
-            expect(message.activeId).toEqual(id);
+            expect(message.activeDictionaryId).toEqual(dictionaryId);
+            expect(message.activeNavigationConfigId).toEqual(navigationConfigId);
         });
     });
     describe("dataDictionary", () => {
@@ -322,7 +325,7 @@ describe("getMessage", () => {
                 MessageSystemDataDictionaryTypeAction.get
             );
             expect(getDataDictionary.dataDictionary).toEqual(dataBlob);
-            expect(getDataDictionary.activeId).toEqual(dataBlob[1]);
+            expect(getDataDictionary.activeDictionaryId).toEqual(dataBlob[1]);
         });
         test("should return messages set to update the active id of the data dictionary", () => {
             const dataBlob: DataDictionary<unknown> = [
@@ -362,7 +365,7 @@ describe("getMessage", () => {
                 {
                     type: MessageSystemType.dataDictionary,
                     action: MessageSystemDataDictionaryTypeAction.updateActiveId,
-                    activeId: "def",
+                    activeDictionaryId: "def",
                 } as UpdateActiveIdDataDictionaryMessageIncoming
             ) as UpdateActiveIdDataDictionaryMessageOutgoing;
 
@@ -372,7 +375,7 @@ describe("getMessage", () => {
             expect(updateDataDictionaryActiveId.action).toEqual(
                 MessageSystemDataDictionaryTypeAction.updateActiveId
             );
-            expect(updateDataDictionaryActiveId.activeId).toEqual("def");
+            expect(updateDataDictionaryActiveId.activeDictionaryId).toEqual("def");
         });
     });
     describe("navigationDictionary", () => {
@@ -410,7 +413,7 @@ describe("getMessage", () => {
                 MessageSystemNavigationDictionaryTypeAction.get
             );
             expect(getNavigationDictionary.navigationDictionary).not.toEqual(undefined);
-            expect(getNavigationDictionary.activeId).not.toEqual(undefined);
+            expect(getNavigationDictionary.activeDictionaryId).not.toEqual(undefined);
         });
         test("should return messages set to update the active id of the navigation dictionary", () => {
             const dataBlob: DataDictionary<unknown> = [
@@ -437,7 +440,7 @@ describe("getMessage", () => {
                 {
                     type: MessageSystemType.navigationDictionary,
                     action: MessageSystemNavigationDictionaryTypeAction.updateActiveId,
-                    activeId: "nav2",
+                    activeDictionaryId: "nav2",
                 } as UpdateActiveIdNavigationDictionaryMessageIncoming
             ) as UpdateActiveIdNavigationDictionaryMessageOutgoing;
 
@@ -447,7 +450,7 @@ describe("getMessage", () => {
             expect(updateNavigationDictionaryActiveId.action).toEqual(
                 MessageSystemNavigationDictionaryTypeAction.updateActiveId
             );
-            expect(updateNavigationDictionaryActiveId.activeId).toEqual("nav2");
+            expect(updateNavigationDictionaryActiveId.activeDictionaryId).toEqual("nav2");
         });
     });
 });

@@ -5,116 +5,142 @@ import {
 import { ChildOptionItem } from "../../../src";
 import { get } from "lodash-es";
 
-import noChildrenSchema from "./no-children.schema.json";
-import childrenSchema from "./children.schema.json";
+import noChildrenSchema from "./no-children.schema";
+import childrenSchema from "./children.schema";
+import { DataDictionary } from "../../../src/message-system/data.props";
 
 const noChildren: any = {
     text: "Hello world",
 };
 
-const children: any = {
-    foo: "Bar",
-    children: [
-        "Foo",
-        {
-            id: get(noChildrenSchema, "id"),
-            props: noChildren,
-        },
-        {
-            id: get(childrenSchema, "id"),
-            props: {
+const children: DataDictionary<any> = [
+    {
+        foo: {
+            schemaId: childrenSchema.id,
+            data: {
                 children: [
                     {
-                        id: get(childrenSchema, "id"),
-                        props: {
-                            children: [
-                                {
-                                    id: get(childrenSchema, "id"),
-                                    props: {
-                                        children: [
-                                            {
-                                                id: get(childrenSchema, "id"),
-                                                props: {
-                                                    children: {
-                                                        id: get(noChildrenSchema, "id"),
-                                                        props: noChildren,
-                                                    },
-                                                },
-                                            },
-                                        ],
-                                    },
-                                },
-                                {
-                                    id: get(childrenSchema, "id"),
-                                    props: {
-                                        children: {
-                                            id: get(noChildrenSchema, "id"),
-                                            props: noChildren,
-                                        },
-                                    },
-                                },
-                            ],
-                        },
+                        id: "bar",
                     },
                 ],
             },
         },
-        {
-            id: get(childrenSchema, "id"),
-            props: {
-                children: {
-                    id: get(noChildrenSchema, "id"),
-                    props: noChildren,
-                },
+        bar: {
+            parent: {
+                id: "foo",
+            },
+            schemaId: noChildrenSchema.id,
+            data: {
+                text: "bar",
             },
         },
-        {
-            id: get(childrenSchema, "id"),
-            props: {
-                children: [
-                    {
-                        id: get(childrenSchema, "id"),
-                        props: {
-                            children: {
-                                id: get(noChildrenSchema, "id"),
-                                props: noChildren,
-                            },
-                        },
-                    },
-                    {
-                        id: get(childrenSchema, "id"),
-                        props: {
-                            children: {
-                                id: get(noChildrenSchema, "id"),
-                                props: noChildren,
-                            },
-                        },
-                    },
-                ],
-            },
-        },
-    ],
-    object: {
-        children: [
-            {
-                id: get(noChildrenSchema, "id"),
-                props: noChildren,
-            },
-            "Foo",
-        ],
     },
-    array: [
-        {
-            children: [
-                {
-                    id: get(noChildrenSchema, "id"),
-                    props: noChildren,
-                },
-                "Bar",
-            ],
-        },
-    ],
-};
+    "foo",
+];
+
+// const children: any = {
+//     foo: "Bar",
+//     children: [
+//         "Foo",
+//         {
+//             id: get(noChildrenSchema, "id"),
+//             props: noChildren,
+//         },
+//         {
+//             id: get(childrenSchema, "id"),
+//             props: {
+//                 children: [
+//                     {
+//                         id: get(childrenSchema, "id"),
+//                         props: {
+//                             children: [
+//                                 {
+//                                     id: get(childrenSchema, "id"),
+//                                     props: {
+//                                         children: [
+//                                             {
+//                                                 id: get(childrenSchema, "id"),
+//                                                 props: {
+//                                                     children: {
+//                                                         id: get(noChildrenSchema, "id"),
+//                                                         props: noChildren,
+//                                                     },
+//                                                 },
+//                                             },
+//                                         ],
+//                                     },
+//                                 },
+//                                 {
+//                                     id: get(childrenSchema, "id"),
+//                                     props: {
+//                                         children: {
+//                                             id: get(noChildrenSchema, "id"),
+//                                             props: noChildren,
+//                                         },
+//                                     },
+//                                 },
+//                             ],
+//                         },
+//                     },
+//                 ],
+//             },
+//         },
+//         {
+//             id: get(childrenSchema, "id"),
+//             props: {
+//                 children: {
+//                     id: get(noChildrenSchema, "id"),
+//                     props: noChildren,
+//                 },
+//             },
+//         },
+//         {
+//             id: get(childrenSchema, "id"),
+//             props: {
+//                 children: [
+//                     {
+//                         id: get(childrenSchema, "id"),
+//                         props: {
+//                             children: {
+//                                 id: get(noChildrenSchema, "id"),
+//                                 props: noChildren,
+//                             },
+//                         },
+//                     },
+//                     {
+//                         id: get(childrenSchema, "id"),
+//                         props: {
+//                             children: {
+//                                 id: get(noChildrenSchema, "id"),
+//                                 props: noChildren,
+//                             },
+//                         },
+//                     },
+//                 ],
+//             },
+//         },
+//     ],
+//     object: {
+//         children: [
+//             {
+//                 id: get(noChildrenSchema, "id"),
+//                 props: noChildren,
+//             },
+//             "Foo",
+//         ],
+//     },
+//     array: [
+//         {
+//             children: [
+//                 {
+//                     id: get(noChildrenSchema, "id"),
+//                     props: noChildren,
+//                 },
+//                 "Bar",
+//             ],
+//         },
+//     ],
+// };
 
 const navigationData: TreeNavigation[] = [
     {

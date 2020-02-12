@@ -4,6 +4,11 @@ import { AddExampleData, Controls } from "../controls/utilities/types";
 import { BadgeType, ControlOnChangeConfig, OnChangeConfig } from "./types";
 import { TreeNavigation } from "../../message-system/navigation.props";
 
+export type UpdateNavigationCallback = (
+    dictionaryId: string,
+    navigationConfigId: string
+) => void;
+
 export type FormHTMLElement =
     | HTMLTextAreaElement
     | HTMLInputElement
@@ -33,9 +38,14 @@ export interface ControlTemplateUtilitiesProps
     dataLocation: string;
 
     /**
+     * The dictionary ID
+     */
+    dictionaryId: string;
+
+    /**
      * The navigation ID
      */
-    navigationId: string;
+    navigationConfigId: string;
 
     /**
      * The navigation
@@ -86,7 +96,7 @@ export interface ControlTemplateUtilitiesProps
     /**
      * The update section callback
      */
-    onUpdateSection: (navigationId: string) => void;
+    onUpdateSection: UpdateNavigationCallback;
 
     /**
      * The default data (if available)
@@ -168,9 +178,14 @@ export interface CommonControlConfig {
     dataLocation: string;
 
     /**
+     * The dictionary ID
+     */
+    dictionaryId: string;
+
+    /**
      * The navigation ID
      */
-    navigationId: string;
+    navigationConfigId: string;
 
     /**
      * The navigation
@@ -286,7 +301,7 @@ export interface SectionLinkControlOptions {
     /**
      * The update section callback
      */
-    onUpdateSection?: (navigationId: string) => void;
+    onUpdateSection?: UpdateNavigationCallback;
 }
 
 export interface SectionControlOptions {
@@ -314,7 +329,7 @@ export interface SectionControlOptions {
     /**
      * The update event to trigger a new active section and/or component
      */
-    onUpdateSection: (navigationId: string) => void;
+    onUpdateSection: UpdateNavigationCallback;
 
     /**
      * The string to be used if a prop is untitled
@@ -346,7 +361,7 @@ export interface ArrayControlOptions {
     /**
      * The update section callback
      */
-    onUpdateSection?: (navigationId: string) => void;
+    onUpdateSection?: UpdateNavigationCallback;
 
     /**
      * The location of the data

@@ -42,7 +42,8 @@ configure({ adapter: new Adapter() });
 const sectionControlProps: SectionControlProps = {
     type: ControlType.section,
     dataLocation: "",
-    navigationId: "",
+    navigationConfigId: "",
+    dictionaryId: "",
     navigation: {
         "": {
             self: "",

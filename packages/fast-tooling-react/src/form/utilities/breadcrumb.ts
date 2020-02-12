@@ -8,14 +8,18 @@ export interface BreadcrumbItem {
     onClick: (e: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
-export type HandleBreadcrumbClick = (navigationId: string) => BreadcrumbItemEventHandler;
+export type HandleBreadcrumbClick = (
+    dictionaryId: string,
+    navigationConfigId: string
+) => BreadcrumbItemEventHandler;
 
 /**
  * Gets breadcrumbs from navigation items
  */
 export function getBreadcrumbs(
     navigation: TreeNavigation,
-    navigationId: string,
+    dictionaryId: string,
+    navigationConfigId: string,
     handleClick: HandleBreadcrumbClick
 ): BreadcrumbItem[] {
     let navigationItems: BreadcrumbItem[] = [];
@@ -23,17 +27,22 @@ export function getBreadcrumbs(
     // Arrays do not need to be represented in breadcrumbs
     // as the array items are shown at the same level as
     // other simple controls
-    if (navigation[navigationId].type !== DataType.array) {
+    if (navigation[navigationConfigId].type !== DataType.array) {
         navigationItems.push({
-            href: navigation[navigationId].self,
-            text: navigation[navigationId].text,
-            onClick: handleClick(navigationId),
+            href: navigation[navigationConfigId].self,
+            text: navigation[navigationConfigId].text,
+            onClick: handleClick(dictionaryId, navigationConfigId),
         });
     }
 
-    if (navigation[navigation[navigationId].parent]) {
+    if (navigation[navigation[navigationConfigId].parent]) {
         navigationItems = navigationItems.concat(
-            getBreadcrumbs(navigation, navigation[navigationId].parent, handleClick)
+            getBreadcrumbs(
+                navigation,
+                dictionaryId,
+                navigation[navigationConfigId].parent,
+                handleClick
+            )
         );
     }
 

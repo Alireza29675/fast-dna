@@ -20,6 +20,8 @@ import { DataType } from "../data-utilities/types";
 import { Register } from "../message-system/message-system.props";
 import { InitializeMessageOutgoing } from "../message-system/message-system.utilities.props";
 import { MessageSystemType } from "../message-system/types";
+import { TreeNavigationConfig } from "src/message-system/navigation.props";
+import { DataDictionary } from "src/message-system/data.props";
 
 /*
  * Configure Enzyme
@@ -94,32 +96,63 @@ describe("Form", () => {
         expect(fastMessageSystem["register"].size).toEqual(0);
     });
     test("should show a section link if the schema contains a property which is an object", () => {
+        const data: any = {
+            bar: {},
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "object",
+                    properties: {
+                        bat: {
+                            type: "string",
+                        },
+                    },
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {},
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "object",
-                            properties: {
-                                bat: {
-                                    type: "string",
-                                },
-                            },
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -132,73 +165,26 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "object",
-                                properties: {
-                                    bat: {
-                                        type: "string",
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    data: {
-                        bar: {},
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "object",
-                                            properties: {
-                                                bat: {
-                                                    type: "string",
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: {},
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "object",
-                                    properties: {
-                                        bat: {
-                                            type: "string",
-                                        },
-                                    },
-                                },
-                                data: {},
-                                text: "bat",
-                                type: DataType.object,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
                     ],
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
+                    ],
+                    navigation,
                 } as InitializeMessageOutgoing,
             } as any);
         });
@@ -210,29 +196,58 @@ describe("Form", () => {
         expect(formInstance.find("SectionLinkControl")).toHaveLength(1);
     });
     test("should show a checkbox if the schema contains a property which is a boolean", () => {
+        const data: any = {
+            bar: true,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "boolean",
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: true,
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "boolean",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -245,57 +260,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "boolean",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: true,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "boolean",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: {},
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "boolean",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.boolean,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -308,29 +291,58 @@ describe("Form", () => {
         expect(formInstance.find("CheckboxControl")).toHaveLength(1);
     });
     test("should show a textarea if the schema contains a property which is a string", () => {
+        const data: any = {
+            bar: "hello world",
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "string",
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.string,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: "hello world",
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "string",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -343,57 +355,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "string",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: "hello world",
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "string",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: {},
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "string",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.string,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -406,29 +386,58 @@ describe("Form", () => {
         expect(formInstance.find("TextareaControl")).toHaveLength(1);
     });
     test("should show a numberfield if the schema contains a property which is a number", () => {
+        const data: any = {
+            bar: 42,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "number",
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: 42,
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "number",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -441,57 +450,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "number",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: 42,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "number",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: {},
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "number",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.number,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -504,33 +481,61 @@ describe("Form", () => {
         expect(formInstance.find("NumberFieldControl")).toHaveLength(1);
     });
     test("should show a select if the schema contains a property which is an enum", () => {
+        const data: any = {
+            bar: 42,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "number",
+                    enum: [42, 24],
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: 42,
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "number",
-                            enum: [42, 24],
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
-
         const formInstance: any = mount(
             <BareForm {...formProps} messageSystem={fastMessageSystem} />
         );
@@ -540,60 +545,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "number",
-                                enum: [42, 24],
-                            },
-                        },
-                    },
-                    data: {
-                        bar: 42,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "number",
-                                            enum: [42, 24],
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: 42,
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "number",
-                                    enum: [42, 24],
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.number,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -606,30 +576,59 @@ describe("Form", () => {
         expect(formInstance.find("SelectControl")).toHaveLength(1);
     });
     test("should show a display if the schema contains a property which is a const", () => {
+        const data: any = {
+            const: 42,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                const: {
+                    type: "number",
+                    const: 42,
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.const,
+                    data: data.const,
+                    text: "bat",
+                    type: DataType.number,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: 42,
-                            const: 42,
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "number",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -642,59 +641,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "number",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: 42,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "number",
-                                            const: 42,
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: {},
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "number",
-                                    const: 42,
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.number,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -707,29 +672,58 @@ describe("Form", () => {
         expect(formInstance.find("DisplayControl")).toHaveLength(1);
     });
     test("should show a button if the schema contains a property which is null", () => {
+        const data: any = {
+            bar: null,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "null",
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: null,
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "null",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -742,57 +736,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "null",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: 42,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "null",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: null,
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "null",
-                                },
-                                data: null,
-                                text: "bat",
-                                type: DataType.number,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -805,32 +767,62 @@ describe("Form", () => {
         expect(formInstance.find("ButtonControl")).toHaveLength(1);
     });
     test("should show an array if the schema contains a property which is an array", () => {
+        const data: any = {
+            bar: [],
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "array",
+                    items: {
+                        type: "string",
+                    },
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.array,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
+
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     "": {
                         schemaId: "foo",
-                        data: {
-                            bar: [],
-                        },
+                        data,
                     },
                 },
                 "",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "array",
-                            items: {
-                                type: "string",
-                            },
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -843,66 +835,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "array",
-                                items: {
-                                    type: "string",
-                                },
-                            },
-                        },
-                    },
-                    data: {
-                        bar: [],
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "array",
-                                            items: {
-                                                type: "string",
-                                            },
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: [],
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "array",
-                                    items: {
-                                        type: "string",
-                                    },
-                                },
-                                data: [],
-                                text: "bat",
-                                type: DataType.number,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -946,12 +897,63 @@ describe("Form", () => {
             <BareForm {...formProps} messageSystem={fastMessageSystem} />
         );
 
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema: {
+                        id: "foo",
+                        type: "object",
+                        properties: {
+                            bar: {
+                                type: "object",
+                                properties: {
+                                    bat: {
+                                        type: "string",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    data: {
+                        bar: {},
+                    },
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: {
+                        type: "object",
+                        properties: {
+                            bat: {
+                                type: "string",
+                            },
+                        },
+                    },
+                    data: {},
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
+
         /* tslint:disable-next-line */
         fastMessageSystem["register"].forEach((registeredItem: Register) => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
                     schema: {
                         id: "foo",
                         type: "object",
@@ -965,46 +967,23 @@ describe("Form", () => {
                     data: {
                         bar: {},
                     },
-                    navigation: [
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "object",
-                                            properties: {},
-                                        },
-                                    },
-                                },
+                                schemaId: "foo",
                                 data: {
-                                    bar: {},
+                                    bar: [],
                                 },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "object",
-                                    properties: {},
-                                },
-                                data: {},
-                                text: "bat",
-                                type: DataType.object,
-                                items: [],
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -1048,12 +1027,63 @@ describe("Form", () => {
             <BareForm {...formProps} messageSystem={fastMessageSystem} />
         );
 
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema: {
+                        id: "foo",
+                        type: "object",
+                        properties: {
+                            bar: {
+                                type: "object",
+                                properties: {
+                                    bat: {
+                                        type: "string",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    data: {
+                        bar: {},
+                    },
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: {
+                        type: "object",
+                        properties: {
+                            bat: {
+                                type: "string",
+                            },
+                        },
+                    },
+                    data: {},
+                    text: "bat",
+                    type: DataType.object,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
+
         /* tslint:disable-next-line */
         fastMessageSystem["register"].forEach((registeredItem: Register) => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "bar",
+                    activeDictionaryId: "abc",
+                    activeNavigationConfigId: "bar",
                     schema: {
                         id: "foo",
                         type: "object",
@@ -1067,46 +1097,23 @@ describe("Form", () => {
                     data: {
                         bar: {},
                     },
-                    navigation: [
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "object",
-                                            properties: {},
-                                        },
-                                    },
-                                },
+                                schemaId: "foo",
                                 data: {
-                                    bar: {},
+                                    bar: [],
                                 },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "object",
-                                    properties: {},
-                                },
-                                data: {},
-                                text: "bat",
-                                type: DataType.object,
-                                items: [],
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -1119,30 +1126,32 @@ describe("Form", () => {
         expect(formInstance.find("li")).toHaveLength(2);
     });
     test("should show a custom form control when encountering a formControlId in the schema instead of the default control if one has been passed", () => {
+        const data: any = {
+            bar: true,
+        };
+        const schema: any = {
+            id: "foo",
+            formControlId: "foobar",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "boolean",
+                },
+            },
+        };
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     abc: {
                         schemaId: "foo",
-                        data: {
-                            bar: true,
-                        },
+                        data,
                     },
                 },
                 "abc",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    formControlId: "foobar",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "boolean",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
 
@@ -1161,63 +1170,58 @@ describe("Form", () => {
             />
         );
 
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties.bar,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.boolean,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
+
         /* tslint:disable-next-line */
         fastMessageSystem["register"].forEach((registeredItem: Register) => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "boolean",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: true,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    formControlId: "foobar",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "boolean",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: true,
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "boolean",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.boolean,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -1231,32 +1235,60 @@ describe("Form", () => {
         expect(formInstance.find(".test")).toHaveLength(1);
     });
     test("should show a custom form control as a type instead of the default control if one has been passed", () => {
+        const data: any = {
+            bar: true,
+        };
+        const schema: any = {
+            id: "foo",
+            type: "object",
+            properties: {
+                bar: {
+                    type: "boolean",
+                },
+            },
+        };
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
+                    schema,
+                    data,
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: schema.properties,
+                    data: data.bar,
+                    text: "bat",
+                    type: DataType.boolean,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
         const fastMessageSystem: MessageSystem = new MessageSystem({
             webWorker: "",
             dataDictionary: [
                 {
                     abc: {
                         schemaId: "foo",
-                        data: {
-                            bar: true,
-                        },
+                        data,
                     },
                 },
                 "abc",
             ],
             schemas: {
-                foo: {
-                    id: "foo",
-                    type: "object",
-                    properties: {
-                        bar: {
-                            type: "boolean",
-                        },
-                    },
-                },
+                foo: schema,
             },
         });
-
         const formInstance: any = mount(
             <BareForm
                 {...formProps}
@@ -1277,57 +1309,25 @@ describe("Form", () => {
             registeredItem.onMessage({
                 data: {
                     type: MessageSystemType.initialize,
-                    activeId: "abc",
-                    schema: {
-                        id: "foo",
-                        type: "object",
-                        properties: {
-                            bar: {
-                                type: "boolean",
-                            },
-                        },
-                    },
-                    data: {
-                        bar: true,
-                    },
-                    navigation: [
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema,
+                    data,
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "boolean",
-                                        },
-                                    },
-                                },
-                                data: {
-                                    bar: true,
-                                },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "boolean",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.boolean,
-                                items: [],
+                                schemaId: "foo",
+                                data,
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);
@@ -1381,12 +1381,13 @@ describe("Form", () => {
             />
         );
 
-        /* tslint:disable-next-line */
-        fastMessageSystem["register"].forEach((registeredItem: Register) => {
-            registeredItem.onMessage({
-                data: {
-                    type: MessageSystemType.initialize,
-                    activeId: "abc",
+        const navigation: TreeNavigationConfig = [
+            {
+                abc: {
+                    self: "abc",
+                    parent: null,
+                    relativeDataLocation: "",
+                    schemaLocation: "",
                     schema: {
                         id: "foo",
                         type: "object",
@@ -1399,44 +1400,63 @@ describe("Form", () => {
                     data: {
                         bar: true,
                     },
-                    navigation: [
+                    text: "bat",
+                    type: DataType.object,
+                    items: ["bar"],
+                },
+                bar: {
+                    self: "bar",
+                    parent: "abc",
+                    relativeDataLocation: "bar",
+                    schemaLocation: "properties.bar",
+                    schema: {
+                        type: "boolean",
+                    },
+                    data: true,
+                    text: "bat",
+                    type: DataType.boolean,
+                    items: [],
+                },
+            },
+            "abc",
+        ];
+
+        /* tslint:disable-next-line */
+        fastMessageSystem["register"].forEach((registeredItem: Register) => {
+            registeredItem.onMessage({
+                data: {
+                    type: MessageSystemType.initialize,
+                    activeDictionaryId: "",
+                    activeNavigationConfigId: "abc",
+                    schema: {
+                        id: "foo",
+                        type: "object",
+                        properties: {
+                            bar: {
+                                type: "boolean",
+                            },
+                        },
+                    },
+                    data: {
+                        bar: true,
+                    },
+                    dataDictionary: [
                         {
                             abc: {
-                                self: "abc",
-                                parent: null,
-                                relativeDataLocation: "",
-                                schemaLocation: "",
-                                schema: {
-                                    id: "foo",
-                                    type: "object",
-                                    properties: {
-                                        bar: {
-                                            type: "boolean",
-                                        },
-                                    },
-                                },
+                                schemaId: "foo",
                                 data: {
                                     bar: true,
                                 },
-                                text: "bat",
-                                type: DataType.object,
-                                items: ["bar"],
-                            },
-                            bar: {
-                                self: "bar",
-                                parent: "abc",
-                                relativeDataLocation: "bar",
-                                schemaLocation: "properties.bar",
-                                schema: {
-                                    type: "boolean",
-                                },
-                                data: true,
-                                text: "bat",
-                                type: DataType.boolean,
-                                items: [],
                             },
                         },
                         "abc",
+                    ],
+                    navigation,
+                    navigationDictionary: [
+                        {
+                            a: navigation,
+                        },
+                        "a",
                     ],
                 } as InitializeMessageOutgoing,
             } as any);

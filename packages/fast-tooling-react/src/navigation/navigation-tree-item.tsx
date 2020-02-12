@@ -21,6 +21,10 @@ import {
     DropTargetMonitor,
     DropTargetSpec,
 } from "react-dnd";
+import {
+    TreeNavigationConfig,
+    TreeNavigationItem,
+} from "../message-system/navigation.props";
 
 export const NavigationTreeItemDragId: symbol = Symbol();
 
@@ -29,16 +33,14 @@ export const navigationTreeItemDragSource: DragSourceSpec<
     NavigationTreeItemDragObject
 > = {
     beginDrag: (props: NavigationTreeItemProps): NavigationTreeItemDragObject => {
-        if (props.type === NavigationDataType.component) {
-            props.handleCloseDraggingItem(props.dataLocation, props.type);
-        }
-
         return {
-            dataLocation: props.dataLocation,
+            dictionaryId: props.dictionaryId,
+            navigationConfigId: props.navigationConfigId,
         };
     },
     endDrag: (props: NavigationTreeItemProps): void => {
-        props.onDragHover(null);
+        // props.onDragHover(null);
+        // console.log("end drag");
     },
 };
 
@@ -52,72 +54,70 @@ export const navigationTreeItemDropSource: DropTargetSpec<NavigationTreeItemProp
             return;
         }
 
-        const item: any = monitor.getItem();
+        // console.log("drop");
 
-        if (props.dataLocation === item.dataLocation) {
-            return;
-        }
+        //         const item: any = monitor.getItem();
 
-        if (
-            props.type === NavigationDataType.children ||
-            props.type === NavigationDataType.component ||
-            (props.type === NavigationDataType.primitiveChild &&
-                (props.dragHoverAfter || props.dragHoverBefore))
-        ) {
-            const verticalDirection: VerticalDragDirection = props.dragHoverAfter
-                ? VerticalDragDirection.down
-                : props.dragHoverBefore
-                    ? VerticalDragDirection.up
-                    : VerticalDragDirection.center;
+        //         if (props.dataLocation === item.dataLocation) {
+        //             return;
+        //         }
 
-            component.props.onChange(
-                item.dataLocation,
-                props.dataLocation,
-                props.type,
-                verticalDirection
-            );
-        }
+        //         if (
+        //             props.type === NavigationDataType.children ||
+        //             props.type === NavigationDataType.component ||
+        //             (props.type === NavigationDataType.primitiveChild &&
+        //                 (props.dragHoverAfter || props.dragHoverBefore))
+        //         ) {
+        //             const verticalDirection: VerticalDragDirection = props.dragHoverAfter
+        //                 ? VerticalDragDirection.down
+        //                 : props.dragHoverBefore
+        //                     ? VerticalDragDirection.up
+        //                     : VerticalDragDirection.center;
+
+        //             component.props.onChange(
+        //                 item.dataLocation,
+        //                 props.dataLocation,
+        //                 props.type,
+        //                 verticalDirection
+        //             );
+        //         }
     },
     hover: (
         props: NavigationTreeItemProps,
         monitor: DropTargetMonitor,
         component: any
     ): void => {
-        if (
-            monitor.isOver({ shallow: true }) &&
-            props.type === NavigationDataType.children
-        ) {
-            props.onDragHover(props.dataLocation);
-        } else if (
-            monitor.isOver({ shallow: true }) &&
-            (props.type === NavigationDataType.component ||
-                props.type === NavigationDataType.primitiveChild)
-        ) {
-            if (!component) {
-                return null;
-            }
-
-            const node: HTMLDivElement = component.getNode();
-
-            if (!node) {
-                return null;
-            }
-
-            const hoverBoundingRect: ClientRect | DOMRect = node.getBoundingClientRect();
-            const hoverMiddleY: number =
-                (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2; // vertical centerline
-            const clientOffset: XYCoord | null = monitor.getClientOffset(); // mouse position
-            const hoverClientY: number = clientOffset.y - hoverBoundingRect.top; // pixels from the top
-            const verticalOffset: number = hoverBoundingRect.height / 4;
-            const direction: VerticalDragDirection =
-                hoverClientY < hoverMiddleY - verticalOffset
-                    ? VerticalDragDirection.up
-                    : hoverClientY > hoverMiddleY + verticalOffset
-                        ? VerticalDragDirection.down
-                        : VerticalDragDirection.center;
-
-            props.onDragHover(props.dataLocation, direction);
-        }
+        //         if (
+        //             monitor.isOver({ shallow: true }) &&
+        //             props.type === NavigationDataType.children
+        //         ) {
+        //             props.onDragHover(props.dataLocation);
+        //         } else if (
+        //             monitor.isOver({ shallow: true }) &&
+        //             (props.type === NavigationDataType.component ||
+        //                 props.type === NavigationDataType.primitiveChild)
+        //         ) {
+        //             if (!component) {
+        //                 return null;
+        //             }
+        //             const node: HTMLDivElement = component.getNode();
+        //             if (!node) {
+        //                 return null;
+        //             }
+        //             const hoverBoundingRect: ClientRect | DOMRect = node.getBoundingClientRect();
+        //             const hoverMiddleY: number =
+        //                 (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2; // vertical centerline
+        //             const clientOffset: XYCoord | null = monitor.getClientOffset(); // mouse position
+        //             const hoverClientY: number = clientOffset.y - hoverBoundingRect.top; // pixels from the top
+        //             const verticalOffset: number = hoverBoundingRect.height / 4;
+        //             const direction: VerticalDragDirection =
+        //                 hoverClientY < hoverMiddleY - verticalOffset
+        //                     ? VerticalDragDirection.up
+        //                     : hoverClientY > hoverMiddleY + verticalOffset
+        //                         ? VerticalDragDirection.down
+        //                         : VerticalDragDirection.center;
+        //             props.onDragHover(props.dataLocation, direction);
+        //         }
     },
 };
 
@@ -158,20 +158,6 @@ const NavigationTreeItem: React.RefForwardingComponent<
 > = React.forwardRef(
     (props: NavigationTreeItemProps, ref: React.RefObject<HTMLDivElement>) => {
         const elementRef: any = useRef(null);
-        const dragDirection: VerticalDragDirection | void = props.dragHoverBefore
-            ? VerticalDragDirection.up
-            : props.dragHoverAfter
-                ? VerticalDragDirection.down
-                : VerticalDragDirection.center;
-
-        function getDragHoverClassName(): string {
-            return props.dragHover && props.canDrop && props.isOver
-                ? ` ${props.getContentDragHoverClassName(
-                      props.type,
-                      typeof dragDirection !== "undefined" ? dragDirection : void 0
-                  )}`
-                : "";
-        }
 
         useImperativeHandle<{}, NavigationTreeItemInstance>(
             ref,
@@ -180,57 +166,29 @@ const NavigationTreeItem: React.RefForwardingComponent<
             })
         );
 
-        const item: JSX.Element =
-            props.children !== undefined ? (
-                <div
-                    className={props.className(props.isDragging)}
-                    role={"treeitem"}
-                    ref={elementRef}
-                    aria-expanded={props.expanded}
-                    onKeyDown={props.handleKeyDown}
-                >
-                    <span
-                        className={`${props.contentClassName}${getDragHoverClassName()}`}
-                        onClick={props.handleSelectionClick}
-                        onKeyDown={props.handleKeyDown}
-                        tabIndex={0}
-                        data-location={props.dataLocation}
-                    >
-                        <button
-                            className={props.expandTriggerClassName}
-                            onClick={props.handleClick}
-                        />
-                        {props.text}
-                    </span>
-                    {props.children}
-                </div>
-            ) : (
-                <div className={props.className(props.isDragging)} ref={elementRef}>
-                    <a
-                        className={`${props.contentClassName}${getDragHoverClassName()}`}
-                        role={"treeitem"}
-                        data-location={props.dataLocation}
-                        href={"#"}
-                        onClick={props.handleClick}
-                        onKeyDown={props.handleKeyDown}
-                        tabIndex={0}
-                    >
-                        {props.text}
-                    </a>
-                </div>
-            );
-
-        const canDragAndDrop: boolean =
-            typeof props.connectDropTarget === "function" &&
-            typeof props.connectDragSource === "function";
-
-        return canDragAndDrop &&
-            (props.type === NavigationDataType.component ||
-                props.type === NavigationDataType.primitiveChild)
-            ? props.connectDragSource(props.connectDropTarget(item))
-            : canDragAndDrop && props.type === NavigationDataType.children
-                ? props.connectDropTarget(item)
-                : item;
+        return props.children[1].length !== 0 ? (
+            <div
+                className={props.contentClassName()}
+                role={"treeitem"}
+                ref={elementRef}
+                aria-expanded={props.expanded}
+            >
+                {props.children}
+            </div>
+        ) : (
+            <a
+                className={props.linkClassName(props.isDragging)}
+                role={"treeitem"}
+                ref={elementRef}
+                onClick={props.handleClick}
+                data-dictionaryid={props.dictionaryId}
+                data-navigationconfigid={props.navigationConfigId}
+                tabIndex={0}
+                onKeyDown={props.handleKeyDown}
+            >
+                <span>{props.item.text}</span>
+            </a>
+        );
     }
 );
 

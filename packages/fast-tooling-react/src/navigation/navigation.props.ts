@@ -1,6 +1,10 @@
 import { ManagedClasses } from "@microsoft/fast-components-class-name-contracts-base";
 import { ChildOptionItem } from "../data-utilities";
 import { NavigationClassNameContract } from "./navigation.style";
+import { MessageSystem } from "../message-system";
+import { TreeNavigationConfigDictionary } from "../message-system/navigation.props";
+
+export const navigationDictionaryLink: string = "navigationDictionaryLink";
 
 export enum NavigationDataType {
     object = "object",
@@ -11,40 +15,55 @@ export enum NavigationDataType {
 }
 
 export interface NavigationState {
-    /**
-     * The navigation data
-     */
-    navigation: TreeNavigation;
-
-    /**
-     * The open items tracked by data location
-     */
-    openItems: string[];
+    // /**
+    //  * The navigation data
+    //  */
+    // navigation: TreeNavigation;
 
     /**
      * The current active item
      */
-    activeItem: null | string;
+    activeItem: {
+        /**
+         * Dictionary key
+         */
+        0: string;
+
+        /**
+         * Navigation config key
+         */
+        1: string;
+    } | null;
+
+    // /**
+    //  * The hovered tree item
+    //  */
+    // dragHoverDataLocation: null | string;
+
+    // /**
+    //  * The hovered location before
+    //  */
+    // dragHoverBeforeDataLocation: null | string;
+
+    // /**
+    //  * The hovered location after
+    //  */
+    // dragHoverAfterDataLocation: null | string;
+
+    // /**
+    //  * The hovered location center
+    //  */
+    // dragHoverCenterDataLocation: null | string;
 
     /**
-     * The hovered tree item
+     * Expanded navigation config items
      */
-    dragHoverDataLocation: null | string;
+    expandedNavigationConfigItems: { [key: string]: string[] };
 
     /**
-     * The hovered location before
+     * The navigation dictionary
      */
-    dragHoverBeforeDataLocation: null | string;
-
-    /**
-     * The hovered location after
-     */
-    dragHoverAfterDataLocation: null | string;
-
-    /**
-     * The hovered location center
-     */
-    dragHoverCenterDataLocation: null | string;
+    navigationDictionary: TreeNavigationConfigDictionary | null;
 }
 
 export interface TreeNavigation {
@@ -73,29 +92,10 @@ export interface TreeNavigation {
 export interface NavigationHandledProps
     extends ManagedClasses<NavigationClassNameContract> {
     /**
-     * The JSON schema
+     * The message system
+     * used for sending and receiving data to the message system
      */
-    schema: any;
-
-    /**
-     * The data mapped to the schema
-     */
-    data: any;
-
-    /**
-     * The React child options
-     */
-    childOptions?: ChildOptionItem[];
-
-    /**
-     * The data location if the component is controlled
-     */
-    dataLocation?: string;
-
-    /**
-     * The location update
-     */
-    onLocationUpdate?: (dataLocation: string) => void;
+    messageSystem: MessageSystem;
 
     /**
      * If navigation items should enable drag to re-order. For this to work,
@@ -104,11 +104,6 @@ export interface NavigationHandledProps
      * see http://react-dnd.github.io/react-dnd/docs/overview
      */
     dragAndDropReordering?: boolean;
-
-    /**
-     * The onChange callback for updating the data
-     */
-    onChange?: (data: any, dataLocation?: string) => void;
 }
 
 export type NavigationProps = NavigationHandledProps;
